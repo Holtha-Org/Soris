@@ -1,0 +1,9 @@
+[package]
+name = "soris"
+version = "0.1.0"
+edition = "2021"
+authors = ["Fundación Holtha"]
+description = "Compilador del lenguaje Soris"
+
+[dependencies]
+rand = "0.8"

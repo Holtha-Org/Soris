@@ -1,14 +1,20 @@
-﻿/*
-=========================================================
+﻿use crate::stdlib::StdlibFunc;
 
-Soris Programming Language
+pub struct Console;
 
-Created by Oshiro
+impl StdlibFunc for Console {
+    fn nombre(&self) -> &str {
+        "consola"
+    }
 
-Maintained by Soris Foundation
+    fn comandos_soportados(&self) -> Vec<&str> {
+        vec!["limpiar"]
+    }
 
-This file is part of the Soris Compiler.
-
-=========================================================
-*/
-
+    fn generar_codigo(&self, comando: &str, argumentos: &[String]) -> String {
+        match comando {
+            "limpiar" => r#"print!("\x1B[2J\x1B[1;1H");"#.to_string(),
+            _ => String::new(),
+        }
+    }
+}

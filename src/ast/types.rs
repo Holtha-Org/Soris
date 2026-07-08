@@ -1,14 +1,20 @@
-﻿/*
-=========================================================
+﻿#[derive(Debug, Clone, PartialEq)]
+pub enum Tipo {
+    Numero,
+    Texto,
+    Booleano,
+    Vacio,
+    Desconocido,
+}
 
-Soris Programming Language
-
-Created by Oshiro
-
-Maintained by Soris Foundation
-
-This file is part of the Soris Compiler.
-
-=========================================================
-*/
-
+impl Tipo {
+    pub fn nombre(&self) -> &str {
+        match self {
+            Tipo::Numero => "número",
+            Tipo::Texto => "texto",
+            Tipo::Booleano => "booleano",
+            Tipo::Vacio => "vacío",
+            Tipo::Desconocido => "desconocido",
+        }
+    }
+}

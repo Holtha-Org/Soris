@@ -1,14 +1,23 @@
-﻿/*
-=========================================================
+﻿use std::fmt;
 
-Soris Programming Language
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Span {
+    pub linea: usize,
+    pub columna: usize,
+}
 
-Created by Oshiro
+impl Span {
+    pub fn new(linea: usize, columna: usize) -> Self {
+        Self { linea, columna }
+    }
 
-Maintained by Soris Foundation
+    pub fn cero() -> Self {
+        Self { linea: 0, columna: 0 }
+    }
+}
 
-This file is part of the Soris Compiler.
-
-=========================================================
-*/
-
+impl fmt::Display for Span {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "línea {}, columna {}", self.linea, self.columna)
+    }
+}
