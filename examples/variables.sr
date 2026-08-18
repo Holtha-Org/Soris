@@ -1,0 +1,15 @@
+// Ejemplo de variables
+var x = 10;
+var y = 20;
+di!(x + y);
+
+// Variables con diferentes tipos
+var nombre = "Juan";
+var edad: ent = 25;
+var altura: flot = 1.75;
+var activo: bool = verdadero;
+
+di!(nombre);
+di!(edad);
+di!(altura);
+di!(activo);

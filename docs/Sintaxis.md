@@ -4,19 +4,55 @@
 
 ## Introducción
 
-Soris es un lenguaje transpilado a Rust nativo. Soporta 40 comandos de la Fundación Holtha.
+Soris es un lenguaje de programación en español transpilado a Rust nativo. Ofrece una sintaxis clara y expresiva para desarrollar aplicaciones eficientes.
 
-## Firma obligatoria
+## Primer Programa
 
-Todo archivo `.sr` debe comenzar con:
-firma "autor:@holtha"
-
+```soris
+// Hola Mundo
+di!("Hola, mundo");
+```
 
 ## Tipos de datos
 
-- Números: `42`, `3.14`
+### Tipos numéricos con signo
+- `ent` - Entero de 32 bits (predeterminado)
+- `ent8` - Entero de 8 bits
+- `ent16` - Entero de 16 bits
+- `ent64` - Entero de 64 bits
+- `ent128` - Entero de 128 bits
+
+### Tipos numéricos sin signo
+- `ent8s` - Entero sin signo de 8 bits
+- `ent16s` - Entero sin signo de 16 bits
+- `ent32s` - Entero sin signo de 32 bits
+- `ent64s` - Entero sin signo de 64 bits
+- `ent128s` - Entero sin signo de 128 bits
+
+### Tipos flotantes
+- `flot` - Número flotante de 64 bits (predeterminado)
+- `f32` - Número flotante de 32 bits
+- `f64` - Número flotante de 64 bits
+
+### Otros tipos
+- `car` - Carácter individual
+- `cad` - Cadena de texto (String)
+- `txt` - Referencia a cadena (&str)
+- `bool` - Booleano (verdadero/falso)
+
+### Tipos especiales
+- `opt` - Tipo opcional
+- `result` - Tipo para manejar errores
+- `alg` - Tipo genérico
+
+### Literales
+
+- Números: `42`, `3.14`, `ent 100`, `flot 2.5`
 - Booleanos: `verdadero`, `falso`
 - Texto: `"hola mundo"`
+- Nada: `nada`
+- Error: `err`
+
 
 ## Operadores
 
@@ -39,37 +75,121 @@ firma "autor:@holtha"
 
 ### Lógicos
 
-- Y: `y` o `&&`
-- O: `o` o `||`
-- No: `no` o `!`
+- Y: `y` (equivalente a `&&`)
+- O: `o` (equivalente a `||`)
+- No: `!` (negación)
+
+### Asignación
+
+- Asignación: `=`
+- Suma y asignación: `+=`
+- Resta y asignación: `-=`
+- Multiplicación y asignación: `*=`
+- División y asignación: `/=`
 
 ## Estructuras de control
 
-### Condicional Si
+### Condicional Si/ElSi/Sino
+
+```soris
 si (condicion) {
-// bloque de código
+    di!("condición verdadera");
+} elsi (otra_condicion) {
+    di!("otra condición verdadera");
 } sino {
-// bloque alternativo
+    di!("ninguna condición se cumplió");
 }
-
-
+```
 
 ### Bucle Mientras
+
+```soris
 mientras (condicion) {
-// bloque de código
+    di!("se repite mientras la condición sea verdadera");
 }
+```
 
+### Bucle Para
 
+```soris
+para i en 0..10 {
+    di!(i);
+}
+```
 
 ## Declaración y Asignación
 
 ### Declarar variable
-declarar nombre = valor
 
-
+```soris
+var nombre = valor;
+var edad: ent = 25;
+var altura: flot = 1.75;
+var activo: bool = verdadero;
+```
 
 ### Asignar valor
-nombre = nuevo_valor
+
+```soris
+nombre = nuevo_valor;
+```
+
+## Macro di!
+
+La macro `di!` es usada para imprimir valores en la consola:
+
+```soris
+di!("Hola");
+di!(42);
+di!(variable);
+di!(x + y);
+```
+
+## Funciones
+
+### Definir función
+
+```soris
+fn nombre_funcion() {
+    di!("cuerpo de la función");
+}
+
+fn suma(a: ent, b: ent) -> ent {
+    retorna a + b;
+}
+
+fn dividir(a: flot, b: flot) -> result {
+    si (b == 0.0) {
+        retorna err "División por cero";
+    }
+    retorna a / b;
+}
+```
+
+### Llamar función
+
+```soris
+nombre_funcion();
+var resultado = suma(5, 3);
+```
+
+## Rasgos (Traits)
+
+```soris
+rasgo Mostrable {
+    fn mostrar();
+}
+```
+
+## Comentarios
+
+Los comentarios se escriben con `//`:
+
+```soris
+// Esto es un comentario de línea
+di!("Código"); // Comentario al final de la línea
+```
+
 
 
 

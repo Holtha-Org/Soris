@@ -35,33 +35,116 @@ git clone https://github.com/tuusuario/soris.git
 cd soris
 cargo build --release
 🚀 Uso
-Compilar un archivo Soris a Rust
-bash
-./target/release/soris programa.sr
-# Genera: programa.rs
-Interpretar directamente
-bash
-./target/release/soris programa.sr --interpretar
-📝 Ejemplo
-soris
-autor:holtha;
 
-declarar nombre = "Mundo";
-imprimir texto.concatenar("¡Hola ", nombre, "!");
+Ejemplo de código Soris:
 
-declarar contador = 0;
-mientras (contador < 5) {
-    imprimir contador;
-    contador = contador + 1;
+```soris
+// Hola Mundo
+di!("Hola, mundo");
+
+// Variables
+var x: ent = 10;
+var y: flot = 3.14;
+var nombre: cad = "Juan";
+
+// Condicionales
+si (x > 5) {
+    di!("x es mayor que 5");
+} elsi (x == 5) {
+    di!("x es igual a 5");
+} sino {
+    di!("x es menor que 5");
 }
-📚 Comandos Disponibles
-Módulo	Comandos
-consola	limpiar
-io	leer_archivo, escribir_archivo
-mat	raiz, potencia, absoluto, redondear
-aleatorio	generar, generar_entre
-texto	longitud, mayuscula, minuscula, concatenar, reemplazar
-tiempo	dormir, ahora, medir
+
+// Bucles
+mientras (x > 0) {
+    di!(x);
+    x = x - 1;
+}
+
+para i en 0..5 {
+    di!(i);
+}
+
+// Funciones
+fn suma(a: ent, b: ent) -> ent {
+    retorna a + b;
+}
+
+var resultado = suma(3, 4);
+di!(resultado);
+```
+
+## 📚 Palabras Clave
+
+### Control de Flujo
+- `si` - condicional
+- `elsi` - else if
+- `sino` - else
+- `mientras` - while loop
+- `para en` - for loop
+- `retorna` - return
+
+### Declaraciones
+- `var` - variable
+- `const` - constante
+- `fn` - función
+- `rasgo` - trait
+- `struct` - estructura
+- `enum` - enumeración
+
+### Tipos
+- **Enteros**: `ent`, `ent8`, `ent16`, `ent64`, `ent128`
+- **Enteros sin signo**: `ent8s`, `ent16s`, `ent32s`, `ent64s`, `ent128s`
+- **Flotantes**: `flot`, `f32`, `f64`
+- **Otros**: `car`, `cad`, `txt`, `bool`, `opt`, `result`
+
+### Operadores Lógicos
+- `y` - AND lógico
+- `o` - OR lógico
+- `!` - NOT lógico
+
+### Otros
+- `pub` - público
+- `mut` - mutable
+- `verdadero` - true
+- `falso` - false
+- `nada` - None
+- `err` - Error
+
+## 📚 Biblioteca Estándar
+
+Soris proporciona acceso a funciones de la biblioteca estándar de Rust a través de módulos:
+
+### Módulo `consola`
+- `consola.limpiar()` - Limpia la pantalla
+
+### Módulo `io` 
+- `io.leer()` - Lee entrada del usuario
+- `io.escribir(texto)` - Escribe a archivo
+
+### Módulo `mat` (Matemáticas)
+- `mat.raiz(n)` - Raíz cuadrada
+- `mat.potencia(base, exp)` - Potencia
+- `mat.absoluto(n)` - Valor absoluto
+- `mat.redondear(n)` - Redondear
+
+### Módulo `aleatorio`
+- `aleatorio.generar()` - Número aleatorio
+- `aleatorio.generar_entre(min, max)` - Aleatorio en rango
+
+### Módulo `texto` (Strings)
+- `texto.longitud(s)` - Longitud de cadena
+- `texto.mayuscula(s)` - Convertir a mayúscula
+- `texto.minuscula(s)` - Convertir a minúscula
+- `texto.concatenar(...)` - Concatenar cadenas
+- `texto.reemplazar(s, from, to)` - Reemplazar
+
+### Módulo `tiempo`
+- `tiempo.dormir(ms)` - Dormir milisegundos
+- `tiempo.ahora()` - Tiempo actual
+- `tiempo.medir()` - Medir tiempo de ejecución
+
 🗺️ Roadmap
 Compilador funcional
 

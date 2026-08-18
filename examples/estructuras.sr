@@ -1,0 +1,20 @@
+// Ejemplo de bucles
+
+// Bucle mientras
+var contador = 0;
+mientras (contador < 5) {
+    di!(contador);
+    contador = contador + 1;
+}
+
+// Bucle para
+para i en 0..5 {
+    di!(i);
+}
+
+// Bucle para anidado
+para i en 0..3 {
+    para j en 0..3 {
+        di!(i);
+    }
+}

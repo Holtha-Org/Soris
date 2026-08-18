@@ -49,35 +49,7 @@ impl Parser {
     pub fn parse(&mut self) -> Result<Vec<Stmt>, ErrorCompilador> {
         let mut statements = Vec::new();
 
-        // Verificar firma de la Fundación Holtha
-        if let Token::Identificador(ref ident) = self.current_token() {
-            if ident == "autor" {
-                self.advance();
-                let _ = self.expect(Token::DosPuntos)?;
-                if let Token::Identificador(ref autor) = self.current_token() {
-                    let span = self.current_span();
-                    let firma = Stmt::Firma {
-                        autor: autor.clone(),
-                        span,
-                    };
-                    self.advance();
-                    let _ = self.expect(Token::PuntoYComa)?;
-                    statements.push(firma);
-                } else {
-                    return Err(ErrorCompilador::new("Se esperaba un identificador después de 'autor:'"));
-                }
-            } else {
-                return Err(ErrorCompilador::new(
-                    "El programa debe comenzar con la firma 'autor:holtha'"
-                ).con_ayuda("Añade 'autor:holtha;' al inicio de tu archivo .sr"));
-            }
-        } else {
-            return Err(ErrorCompilador::new(
-                "El programa debe comenzar con la firma 'autor:holtha'"
-            ).con_ayuda("Añade 'autor:holtha;' al inicio de tu archivo .sr"));
-        }
-
-        // Parsear el resto del programa
+        // Parsear el programa sin requerir una firma especial
         while *self.current_token() != Token::EOF {
             statements.push(self.parse_statement()?);
         }
@@ -87,10 +59,12 @@ impl Parser {
 
     fn parse_statement(&mut self) -> Result<Stmt, ErrorCompilador> {
         match self.current_token() {
-            Token::Declarar => self.parse_declaration(),
-            Token::Imprimir => self.parse_print(),
+            Token::Var => self.parse_declaration(),
+            Token::Di => self.parse_di_macro(),
             Token::Si => self.parse_if(),
+            Token::ElSi => return Err(ErrorCompilador::new("'elsi' no puede usarse fuera de un bloque si")),
             Token::Mientras => self.parse_while(),
+            Token::Para => self.parse_for(),
             Token::Identificador(_) => {
                 if self.posicion + 1 < self.tokens.len() {
                     match self.tokens[self.posicion + 1].0 {
@@ -108,11 +82,11 @@ impl Parser {
 
     fn parse_declaration(&mut self) -> Result<Stmt, ErrorCompilador> {
         let span = self.current_span();
-        self.advance(); // Consumir 'declarar'
+        self.advance(); // Consumir 'var'
         let nombre = if let Token::Identificador(ref name) = self.current_token() {
             name.clone()
         } else {
-            return Err(ErrorCompilador::new("Se esperaba un nombre de variable después de 'declarar'"));
+            return Err(ErrorCompilador::new("Se esperaba un nombre de variable después de 'var'"));
         };
         self.advance();
 
@@ -151,13 +125,39 @@ impl Parser {
         })
     }
 
-    fn parse_print(&mut self) -> Result<Stmt, ErrorCompilador> {
+    fn parse_di_macro(&mut self) -> Result<Stmt, ErrorCompilador> {
         let span = self.current_span();
-        self.advance(); // Consumir 'imprimir'
-        let expr = self.parse_expression()?;
-        let _ = self.expect(Token::PuntoYComa)?;
+        self.advance(); // Consumir 'di'
+        
+        // Esperar '!' si está presente
+        if *self.current_token() == Token::Negacion {
+            self.advance();
+        }
+        
+        // Esperar '(' 
+        self.expect(Token::ParIzq)?;
+        
+        // Parsear argumentos
+        let mut argumentos = Vec::new();
+        if *self.current_token() != Token::ParDer {
+            argumentos.push(self.parse_expression()?);
+            while *self.current_token() == Token::Coma {
+                self.advance();
+                argumentos.push(self.parse_expression()?);
+            }
+        }
+        
+        self.expect(Token::ParDer)?;
+        self.expect(Token::PuntoYComa)?;
+        
         Ok(Stmt::Impresion {
-            expresion: expr,
+            expresion: if argumentos.len() == 1 {
+                argumentos.into_iter().next().unwrap()
+            } else {
+                // Múltiples argumentos: crear un Tuple o similar
+                // Por ahora, simplemente tomar el primero
+                argumentos.into_iter().next().unwrap()
+            },
             span,
         })
     }
@@ -177,7 +177,23 @@ impl Parser {
         self.expect(Token::LlaveDer)?;
 
         let mut sino = None;
-        if *self.current_token() == Token::Sino {
+        if *self.current_token() == Token::ElSi {
+            self.advance();
+            // elsi es "else if", así que parsear como un if anidado
+            self.expect(Token::ParIzq)?;
+            let _condicion_elsi = self.parse_expression()?;
+            self.expect(Token::ParDer)?;
+            self.expect(Token::LlaveIzq)?;
+            
+            let mut cuerpo_elsi = Vec::new();
+            while *self.current_token() != Token::LlaveDer {
+                cuerpo_elsi.push(self.parse_statement()?);
+            }
+            self.expect(Token::LlaveDer)?;
+            
+            // Crear un if anidado como el sino
+            sino = Some(cuerpo_elsi);
+        } else if *self.current_token() == Token::Sino {
             self.advance();
             self.expect(Token::LlaveIzq)?;
             let mut cuerpo_sino = Vec::new();
@@ -215,6 +231,54 @@ impl Parser {
             cuerpo,
             span,
         })
+    }
+
+    fn parse_for(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'para'
+        
+        // Parsear variable de iteración
+        let variable = if let Token::Identificador(ref name) = self.current_token() {
+            name.clone()
+        } else {
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'para'"));
+        };
+        self.advance();
+        
+        // Esperar 'en'
+        self.expect(Token::En)?;
+        
+        // Parsear rango/iterable
+        let _inicio = self.parse_expression()?;
+        
+        // Por ahora, solo soportamos rangos (0..10)
+        // Esperamos un DosPuntos para el rango
+        if *self.current_token() == Token::DosPuntos {
+            self.advance();
+            let fin = self.parse_expression()?;
+            self.expect(Token::LlaveIzq)?;
+            
+            let mut cuerpo = Vec::new();
+            while *self.current_token() != Token::LlaveDer {
+                cuerpo.push(self.parse_statement()?);
+            }
+            self.expect(Token::LlaveDer)?;
+            
+            // Convertir a Stmt::Mientras equivalente
+            // para i en 0..10 => mientras i < 10 { cuerpo; i += 1 }
+            Ok(Stmt::Mientras {
+                condicion: Expr::Binaria {
+                    izquierda: Box::new(Expr::Identificador(variable, span)),
+                    operador: BinOp::Menor,
+                    derecha: Box::new(fin),
+                    span,
+                },
+                cuerpo,
+                span,
+            })
+        } else {
+            Err(ErrorCompilador::new("Se esperaba '..' en bucle 'para'"))
+        }
     }
 
     fn parse_stdlib_call(&mut self) -> Result<Stmt, ErrorCompilador> {

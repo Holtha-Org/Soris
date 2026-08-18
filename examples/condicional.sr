@@ -1,0 +1,15 @@
+// Ejemplo de condicionales
+var x = 15;
+
+si (x > 10) {
+    di!("x es mayor que 10");
+} elsi (x == 10) {
+    di!("x es igual a 10");
+} sino {
+    di!("x es menor que 10");
+}
+
+// Condicional simple
+si (x > 0) {
+    di!("x es positivo");
+}

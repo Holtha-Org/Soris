@@ -1,0 +1,24 @@
+// Ejemplo de funciones
+
+// Función simple que imprime
+fn saludar() {
+    di!("Hola desde una función");
+}
+
+// Función que suma dos números
+fn suma(a: ent, b: ent) -> ent {
+    retorna a + b;
+}
+
+// Función que devuelve result
+fn dividir(a: flot, b: flot) -> result {
+    si (b == 0.0) {
+        retorna err "División por cero";
+    }
+    retorna a / b;
+}
+
+// Llamadas a las funciones
+saludar();
+var resultado = suma(5, 3);
+di!(resultado);

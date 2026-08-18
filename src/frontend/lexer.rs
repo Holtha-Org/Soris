@@ -120,6 +120,9 @@ impl Lexer {
                 if self.current_char() == '=' {
                     self.advance();
                     Ok((Token::Igual, span))
+                } else if self.current_char() == '>' {
+                    self.advance();
+                    Ok((Token::FlechaGorda, span))
                 } else {
                     Ok((Token::Asignacion, span))
                 }
@@ -151,10 +154,49 @@ impl Lexer {
                     Ok((Token::Mayor, span))
                 }
             }
-            '+' => { self.advance(); Ok((Token::Suma, span)) }
-            '-' => { self.advance(); Ok((Token::Resta, span)) }
-            '*' => { self.advance(); Ok((Token::Multiplicacion, span)) }
-            '/' => { self.advance(); Ok((Token::Division, span)) }
+            '+' => {
+                self.advance();
+                if self.current_char() == '=' {
+                    self.advance();
+                    Ok((Token::PluIgual, span))
+                } else {
+                    Ok((Token::Suma, span))
+                }
+            }
+            '-' => {
+                self.advance();
+                if self.current_char() == '=' {
+                    self.advance();
+                    Ok((Token::MenosIgual, span))
+                } else if self.current_char() == '>' {
+                    self.advance();
+                    Ok((Token::Flecha, span))
+                } else {
+                    Ok((Token::Resta, span))
+                }
+            }
+            '*' => {
+                self.advance();
+                if self.current_char() == '=' {
+                    self.advance();
+                    Ok((Token::MulIgual, span))
+                } else {
+                    Ok((Token::Multiplicacion, span))
+                }
+            }
+            '/' => {
+                self.advance();
+                if self.current_char() == '=' {
+                    self.advance();
+                    Ok((Token::DivIgual, span))
+                } else {
+                    Ok((Token::Division, span))
+                }
+            }
+            '%' => {
+                self.advance();
+                Ok((Token::Modulo, span))
+            }
             ';' => { self.advance(); Ok((Token::PuntoYComa, span)) }
             ',' => { self.advance(); Ok((Token::Coma, span)) }
             '.' => { self.advance(); Ok((Token::Punto, span)) }
@@ -171,7 +213,7 @@ impl Lexer {
                     self.advance();
                     Ok((Token::YLogico, span))
                 } else {
-                    Err(ErrorCompilador::new("Carácter inesperado '&'").con_ayuda("Usa 'y' para el operador lógico"))
+                    Ok((Token::And, span))
                 }
             }
             '|' => {
@@ -180,7 +222,7 @@ impl Lexer {
                     self.advance();
                     Ok((Token::OLogico, span))
                 } else {
-                    Err(ErrorCompilador::new("Carácter inesperado '|'").con_ayuda("Usa 'o' para el operador lógico"))
+                    Ok((Token::Or, span))
                 }
             }
             '"' => Ok((self.read_string(), span)),
