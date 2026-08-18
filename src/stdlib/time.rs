@@ -15,10 +15,10 @@ impl StdlibFunc for Time {
         match comando {
             "dormir" => {
                 if argumentos.is_empty() {
-                    "std::thread::sleep(std::time::Duration::from_secs(0));".to_string()
+                    "std::thread::sleep(std::time::Duration::from_millis(0));".to_string()
                 } else {
                     format!(
-                        "std::thread::sleep(std::time::Duration::from_secs_f64({}));",
+                        "std::thread::sleep(std::time::Duration::from_millis({} as u64));",
                         argumentos[0]
                     )
                 }
@@ -27,11 +27,7 @@ impl StdlibFunc for Time {
                 "std::time::SystemTime::now()".to_string()
             }
             "medir" => {
-                if argumentos.is_empty() {
-                    "std::time::Instant::now()".to_string()
-                } else {
-                    format!("std::time::Instant::now()")
-                }
+                "std::time::Instant::now()".to_string()
             }
             _ => String::new(),
         }

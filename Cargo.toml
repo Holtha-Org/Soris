@@ -2,8 +2,16 @@
 name = "soris"
 version = "0.1.0"
 edition = "2021"
-authors = ["Fundación Holtha"]
+authors = [" Holtha-HT"]
 description = "Compilador del lenguaje Soris"
+
+[[bin]]
+name = "soris"
+path = "src/main.rs"
+
+[lib]
+name = "soris"
+path = "src/lib.rs"
 
 [dependencies]
 rand = "0.8"
