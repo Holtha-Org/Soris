@@ -13,32 +13,37 @@ pub enum Token {
     Continuar,
     Retorna,
     
-    // Palabras clave de declaraciones
-    Fn,
-    Var,
-    Const,
-    Rasgo,
-    Struct,
-    Enum,
-    Impl,
-    
-    // Palabras clave de tipos
-    I8, I16, I32, I64, I128,
-    U8, U16, U32, U64, U128,
-    Ent, Ent8, Ent16, Ent64, Ent128,
+    // Palabras clave de declaraciones (Sintaxis exacta Soris)
+    Vr,          // vr - variable (let)
+    Mut,         // mut - mutable
+    Const,       // const - constante
+    Estatico,    // estatico - estática
+    Fn,          // fn - función
+    Inicio,      // inicio - función main
+    Rasgo,       // rasgo - trait
+    Struct,      // struct - estructura
+    Enum,        // enum - enumeración
+    Impl,        // impl - implementación
+    Tipo,        // tipo - type alias
+
+    // Palabras clave de tipos (Sintaxis exacta Soris)
+    Ent8, Ent16, Ent, Ent64, Ent128,
     Ent8s, Ent16s, Ent32s, Ent64s, Ent128s,
     Flot, F32, F64,
     Car, Cad, Txt,
     Bool,
-    Opt, Result, Alg, Nada, Err,
-    
-    // Otros keywords
-    Pub, Priv, Mut, Ref,
+    Opt, Alg, Nada, Result, Ok, Err,
+
+    // Visibilidad y otros
+    Pub, Priv, Ref,
     Verdadero, Falso,
     Self_,
-    
+
     // Macro di!
     Di,
+
+    // Pattern matching
+    Coin,        // coin - match
     
     // Literales e identificadores
     Identificador(String),
@@ -97,32 +102,24 @@ impl Token {
             "pausa" => Token::Pausa,
             "continuar" => Token::Continuar,
             "retorna" => Token::Retorna,
-            
-            // Declaraciones
-            "fn" => Token::Fn,
-            "var" => Token::Var,
+
+            // Declaraciones (Sintaxis exacta Soris)
+            "vr" => Token::Vr,
+            "mut" => Token::Mut,
             "const" => Token::Const,
+            "estatico" => Token::Estatico,
+            "fn" => Token::Fn,
+            "inicio" => Token::Inicio,
             "rasgo" => Token::Rasgo,
             "struct" => Token::Struct,
             "enum" => Token::Enum,
             "impl" => Token::Impl,
-            
-            // Tipos numéricos enteros
-            "i8" => Token::I8,
-            "i16" => Token::I16,
-            "i32" => Token::I32,
-            "i64" => Token::I64,
-            "i128" => Token::I128,
-            "u8" => Token::U8,
-            "u16" => Token::U16,
-            "u32" => Token::U32,
-            "u64" => Token::U64,
-            "u128" => Token::U128,
-            
-            // Tipos personalizados de Soris
-            "ent" => Token::Ent,
+            "tipo" => Token::Tipo,
+
+            // Tipos numéricos enteros (Sintaxis exacta Soris)
             "ent8" => Token::Ent8,
             "ent16" => Token::Ent16,
+            "ent" => Token::Ent,
             "ent64" => Token::Ent64,
             "ent128" => Token::Ent128,
             "ent8s" => Token::Ent8s,
@@ -130,37 +127,40 @@ impl Token {
             "ent32s" => Token::Ent32s,
             "ent64s" => Token::Ent64s,
             "ent128s" => Token::Ent128s,
-            
+
             // Tipos flotantes
             "flot" => Token::Flot,
             "f32" => Token::F32,
             "f64" => Token::F64,
-            
+
             // Otros tipos
             "car" => Token::Car,
             "cad" => Token::Cad,
             "txt" => Token::Txt,
             "bool" => Token::Bool,
-            
+
             // Result/Option/Algun
             "opt" => Token::Opt,
-            "result" => Token::Result,
             "alg" => Token::Alg,
             "nada" => Token::Nada,
+            "result" => Token::Result,
+            "ok" => Token::Ok,
             "err" => Token::Err,
-            
+
             // Otros keywords
             "pub" => Token::Pub,
             "priv" => Token::Priv,
-            "mut" => Token::Mut,
             "ref" => Token::Ref,
             "verdadero" => Token::Verdadero,
             "falso" => Token::Falso,
             "self" => Token::Self_,
-            
+
             // Macro di!
             "di" => Token::Di,
-            
+
+            // Pattern matching
+            "coin" => Token::Coin,
+
             _ => Token::Identificador(palabra.to_string()),
         }
     }
@@ -179,30 +179,26 @@ impl fmt::Display for Token {
             Token::Pausa => write!(f, "'pausa'"),
             Token::Continuar => write!(f, "'continuar'"),
             Token::Retorna => write!(f, "'retorna'"),
+            Token::Rompe => write!(f, "'rom'"),
+            Token::Coin => write!(f, "'coin'"),
             
             // Declaraciones
-            Token::Fn => write!(f, "'fn'"),
-            Token::Var => write!(f, "'var'"),
+            Token::Vr => write!(f, "'vr'"),
+            Token::Mut => write!(f, "'mut'"),
             Token::Const => write!(f, "'const'"),
+            Token::Estatico => write!(f, "'estatico'"),
+            Token::Fn => write!(f, "'fn'"),
+            Token::Inicio => write!(f, "'inicio'"),
             Token::Rasgo => write!(f, "'rasgo'"),
             Token::Struct => write!(f, "'struct'"),
             Token::Enum => write!(f, "'enum'"),
             Token::Impl => write!(f, "'impl'"),
+            Token::Tipo => write!(f, "'tipo'"),
             
             // Tipos
-            Token::I8 => write!(f, "'i8'"),
-            Token::I16 => write!(f, "'i16'"),
-            Token::I32 => write!(f, "'i32'"),
-            Token::I64 => write!(f, "'i64'"),
-            Token::I128 => write!(f, "'i128'"),
-            Token::U8 => write!(f, "'u8'"),
-            Token::U16 => write!(f, "'u16'"),
-            Token::U32 => write!(f, "'u32'"),
-            Token::U64 => write!(f, "'u64'"),
-            Token::U128 => write!(f, "'u128'"),
-            Token::Ent => write!(f, "'ent'"),
             Token::Ent8 => write!(f, "'ent8'"),
             Token::Ent16 => write!(f, "'ent16'"),
+            Token::Ent => write!(f, "'ent'"),
             Token::Ent64 => write!(f, "'ent64'"),
             Token::Ent128 => write!(f, "'ent128'"),
             Token::Ent8s => write!(f, "'ent8s'"),
@@ -218,15 +214,15 @@ impl fmt::Display for Token {
             Token::Txt => write!(f, "'txt'"),
             Token::Bool => write!(f, "'bool'"),
             Token::Opt => write!(f, "'opt'"),
-            Token::Result => write!(f, "'result'"),
             Token::Alg => write!(f, "'alg'"),
             Token::Nada => write!(f, "'nada'"),
+            Token::Result => write!(f, "'result'"),
+            Token::Ok => write!(f, "'ok'"),
             Token::Err => write!(f, "'err'"),
             
             // Otros
             Token::Pub => write!(f, "'pub'"),
             Token::Priv => write!(f, "'priv'"),
-            Token::Mut => write!(f, "'mut'"),
             Token::Ref => write!(f, "'ref'"),
             Token::Verdadero => write!(f, "'verdadero'"),
             Token::Falso => write!(f, "'falso'"),

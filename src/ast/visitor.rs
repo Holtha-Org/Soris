@@ -46,22 +46,17 @@ pub fn recorrer_expr<T>(visitor: &mut dyn Visitor<T>, expr: &Expr) -> T {
 pub fn recorrer_stmt<T>(visitor: &mut dyn Visitor<T>, stmt: &Stmt) -> T {
     match stmt {
         Stmt::Firma { autor, .. } => visitor.visitar_stmt_firma(autor),
-        Stmt::Declaracion { nombre, valor_inicial, .. } => {
+        Stmt::Sea { nombre, valor_inicial, .. } |
+        Stmt::SeaMut { nombre, valor_inicial, .. } => {
             visitor.visitar_stmt_declaracion(nombre, valor_inicial)
         }
-        Stmt::Asignacion { nombre, valor, .. } => {
-            visitor.visitar_stmt_asignacion(nombre, valor)
-        }
-        Stmt::Impresion { expresion, .. } => {
-            visitor.visitar_stmt_impresion(expresion)
-        }
+        Stmt::Expresion(expr, _) => visitor.visitar_stmt_expresion(expr),
         Stmt::Si { condicion, cuerpo, sino, .. } => {
             visitor.visitar_stmt_si(condicion, cuerpo, sino)
         }
         Stmt::Mientras { condicion, cuerpo, .. } => {
             visitor.visitar_stmt_mientras(condicion, cuerpo)
         }
-        Stmt::Expresion(expr, _) => visitor.visitar_stmt_expresion(expr),
         Stmt::LlamadaStdlib { comando, argumentos, .. } => {
             visitor.visitar_stmt_llamada_stdlib(comando, argumentos)
         }

@@ -1,0 +1,16 @@
+fn inicio() {
+    vr mensaje = "¡Hola desde Soris!";
+    di!("{}", mensaje);
+    
+    vr x: ent = 10;
+    vr y: ent = 20;
+    vr suma = x + y;
+    
+    di!("La suma es: {}", suma);
+    
+    si suma > 25 {
+        di!("Es grande");
+    } sino {
+        di!("Es pequeño");
+    }
+}

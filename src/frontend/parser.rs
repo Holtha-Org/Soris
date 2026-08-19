@@ -1,8 +1,9 @@
 use crate::utils::token::Token;
 use crate::utils::span::Span;
 use crate::utils::errors::ErrorCompilador;
-use crate::ast::expr::{Expr, BinOp, UnaryOp};
-use crate::ast::stmt::Stmt;
+use crate::ast::expr::{Expr, BinOp, UnaryOp, Patron, BrazoMatch};
+use crate::ast::stmt::{Stmt, Funcion, VarianteEnum, FirmaMetodo};
+use crate::ast::types::Tipo;
 use crate::frontend::lexer::Lexer;
 
 pub struct Parser {
@@ -28,6 +29,14 @@ impl Parser {
         self.tokens[self.posicion].1
     }
 
+    fn peek_token(&self) -> &Token {
+        if self.posicion + 1 < self.tokens.len() {
+            &self.tokens[self.posicion + 1].0
+        } else {
+            &Token::EOF
+        }
+    }
+
     fn advance(&mut self) {
         if self.posicion < self.tokens.len() - 1 {
             self.posicion += 1;
@@ -46,10 +55,22 @@ impl Parser {
         }
     }
 
+    fn check(&self, token: &Token) -> bool {
+        std::mem::discriminant(self.current_token()) == std::mem::discriminant(token)
+    }
+
+    fn eat(&mut self, token: Token) -> Result<(), ErrorCompilador> {
+        if self.check(&token) {
+            self.advance();
+            Ok(())
+        } else {
+            Err(ErrorCompilador::new(&format!("Se esperaba {}", token)))
+        }
+    }
+
     pub fn parse(&mut self) -> Result<Vec<Stmt>, ErrorCompilador> {
         let mut statements = Vec::new();
 
-        // Parsear el programa sin requerir una firma especial
         while *self.current_token() != Token::EOF {
             statements.push(self.parse_statement()?);
         }
@@ -58,71 +79,507 @@ impl Parser {
     }
 
     fn parse_statement(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        
         match self.current_token() {
-            Token::Var => self.parse_declaration(),
-            Token::Di => self.parse_di_macro(),
+            // Declaraciones
+            Token::Vr | Token::Mut => self.parse_var_decl(),
+            Token::Const => self.parse_const_decl(),
+            Token::Estatico => self.parse_static_decl(),
+            Token::Fn => self.parse_fn_decl(),
+            Token::Struct => self.parse_struct_decl(),
+            Token::Enum => self.parse_enum_decl(),
+            Token::Rasgo => self.parse_trait_decl(),
+            Token::Impl => self.parse_impl_decl(),
+            Token::Pub => self.parse_pub_decl(),
+            
+            // Control de flujo
             Token::Si => self.parse_if(),
-            Token::ElSi => return Err(ErrorCompilador::new("'elsi' no puede usarse fuera de un bloque si")),
+            Token::Coin => self.parse_coin(),
             Token::Mientras => self.parse_while(),
             Token::Para => self.parse_for(),
-            Token::Identificador(_) => {
-                if self.posicion + 1 < self.tokens.len() {
-                    match self.tokens[self.posicion + 1].0 {
-                        Token::Asignacion => self.parse_assignment(),
-                        Token::Punto => self.parse_stdlib_call(),
-                        _ => self.parse_expression_statement(),
-                    }
-                } else {
-                    self.parse_expression_statement()
-                }
-            }
-            _ => self.parse_expression_statement(),
+            Token::Buc => self.parse_buc(),
+            
+            // Control dentro de loops
+            Token::Retorna => self.parse_return_stmt(),
+            Token::Rom => self.parse_break_stmt(),
+            Token::Cont => self.parse_continue_stmt(),
+            
+            // Macros y atributos
+            Token::Di => self.parse_di_macro(),
+            
+            // Expresiones como statements
+            _ => self.parse_expr_stmt(),
         }
     }
 
-    fn parse_declaration(&mut self) -> Result<Stmt, ErrorCompilador> {
-        let span = self.current_span();
-        self.advance(); // Consumir 'var'
-        let nombre = if let Token::Identificador(ref name) = self.current_token() {
-            name.clone()
-        } else {
-            return Err(ErrorCompilador::new("Se esperaba un nombre de variable después de 'var'"));
-        };
-        self.advance();
+    // ============================================
+    // DECLARACIONES
+    // ============================================
 
-        let mut valor_inicial = None;
-        if *self.current_token() == Token::Asignacion {
+    fn parse_var_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'vr'
+
+        let mut es_mut = false;
+        if self.check(&Token::Mut) {
             self.advance();
-            valor_inicial = Some(self.parse_expression()?);
+            es_mut = true;
         }
 
-        let _ = self.expect(Token::PuntoYComa)?;
-
-        Ok(Stmt::Declaracion {
-            nombre,
-            valor_inicial,
-            span,
-        })
-    }
-
-    fn parse_assignment(&mut self) -> Result<Stmt, ErrorCompilador> {
-        let span = self.current_span();
         let nombre = if let Token::Identificador(ref name) = self.current_token() {
             name.clone()
         } else {
-            return Err(ErrorCompilador::new("Se esperaba un nombre de variable para la asignación"));
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'vr'"));
         };
         self.advance();
-        self.expect(Token::Asignacion)?;
 
+        // Tipo opcional
+        let tipo_opcional = if self.check(&Token::DosPuntos) {
+            self.advance();
+            Some(self.parse_tipo()?)
+        } else {
+            None
+        };
+
+        // Valor inicial (requerido)
+        self.expect(Token::Igual)?;
+        let valor_inicial = Some(self.parse_expression()?);
+
+        self.expect(Token::PuntoYComa)?;
+
+        if es_mut {
+            Ok(Stmt::SeaMut {
+                nombre,
+                tipo_opcional,
+                valor_inicial,
+                span,
+            })
+        } else {
+            Ok(Stmt::Sea {
+                nombre,
+                tipo_opcional,
+                valor_inicial,
+                span,
+            })
+        }
+    }
+
+    fn parse_const_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'const'
+
+        let nombre = if let Token::Identificador(ref name) = self.current_token() {
+            name.clone()
+        } else {
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'const'"));
+        };
+        self.advance();
+
+        // Tipo requerido para const
+        self.expect(Token::DosPuntos)?;
+        let tipo = self.parse_tipo()?;
+
+        self.expect(Token::Igual)?;
         let valor = self.parse_expression()?;
-        let _ = self.expect(Token::PuntoYComa)?;
+        self.expect(Token::PuntoYComa)?;
 
-        Ok(Stmt::Asignacion {
+        Ok(Stmt::Const {
             nombre,
+            tipo: tipo.nombre().to_string(),
             valor,
             span,
         })
+    }
+
+    fn parse_static_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'estatico'
+
+        let mutable = if self.check(&Token::Mut) {
+            self.advance();
+            true
+        } else {
+            false
+        };
+
+        let nombre = if let Token::Identificador(ref name) = self.current_token() {
+            name.clone()
+        } else {
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'estatico'"));
+        };
+        self.advance();
+
+        self.expect(Token::DosPuntos)?;
+        let tipo = self.parse_tipo()?;
+
+        self.expect(Token::Asignacion)?;
+        let valor = self.parse_expression()?;
+        self.expect(Token::PuntoYComa)?;
+
+        Ok(Stmt::Estatico {
+            nombre,
+            tipo,
+            valor,
+            mutable,
+            span,
+        })
+    }
+
+    // ============================================
+    // FUNCIONES, STRUCTS, ENUMS, TRAITS, IMPL
+    // ============================================
+
+    fn parse_fn_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'fn'
+
+        let es_pub = if self.check(&Token::Pub) {
+            self.advance();
+            true
+        } else {
+            false
+        };
+
+        let nombre = if let Token::Identificador(ref name) = self.current_token() {
+            name.clone()
+        } else {
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'fn'"));
+        };
+        self.advance();
+
+        // Parámetros genéricos opcionales <T, U>
+        let mut generico = Vec::new();
+        if self.check(&Token::Menor) {
+            self.advance();
+            while !self.check(&Token::Mayor) {
+                if let Token::Identificador(ref name) = self.current_token() {
+                    generico.push(name.clone());
+                }
+                self.advance();
+                if self.check(&Token::Coma) {
+                    self.advance();
+                }
+            }
+            self.expect(Token::Mayor)?;
+        }
+
+        // Parámetros de la función
+        self.expect(Token::ParIzq)?;
+        let mut parametros = Vec::new();
+        if !self.check(&Token::ParDer) {
+            loop {
+                let param_nombre = if let Token::Identificador(ref name) = self.current_token() {
+                    name.clone()
+                } else {
+                    return Err(ErrorCompilador::new("Se esperaba un identificador para el parámetro"));
+                };
+                self.advance();
+
+                self.expect(Token::DosPuntos)?;
+                let param_tipo = self.parse_tipo()?;
+
+                parametros.push((param_nombre, param_tipo));
+
+                if !self.check(&Token::Coma) {
+                    break;
+                }
+                self.advance();
+            }
+        }
+        self.expect(Token::ParDer)?;
+
+        // Tipo de retorno opcional
+        let retorno = if self.check(&Token::Flecha) {
+            self.advance();
+            Some(self.parse_tipo()?)
+        } else {
+            None
+        };
+
+        // Cláusulas where (simplificado - por implementar)
+        let donde = Vec::new();
+
+        // Cuerpo de la función
+        let cuerpo = if self.check(&Token::LlaveIzq) {
+            self.parse_bloque()?
+        } else {
+            self.expect(Token::PuntoYComa)?;
+            Vec::new()
+        };
+
+        Ok(Stmt::Funcion {
+            firma: Funcion {
+                nombre,
+                parametros,
+                retorno: retorno.map(|t| t.nombre().to_string()),
+                generico,
+                donde,
+                cuerpo,
+                es_seguro: true,
+                es_async: false,
+            },
+            span,
+        })
+    }
+
+    fn parse_struct_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'struct'
+
+        let nombre = if let Token::Identificador(ref name) = self.current_token() {
+            name.clone()
+        } else {
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'struct'"));
+        };
+        self.advance();
+
+        // Campos del struct
+        self.expect(Token::LlaveIzq)?;
+        let mut campos = Vec::new();
+        while !self.check(&Token::LlaveDer) {
+            let campo_nombre = if let Token::Identificador(ref name) = self.current_token() {
+                name.clone()
+            } else {
+                return Err(ErrorCompilador::new("Se esperaba un identificador para el campo"));
+            };
+            self.advance();
+
+            self.expect(Token::DosPuntos)?;
+            let campo_tipo = self.parse_tipo()?;
+
+            campos.push((campo_nombre, campo_tipo.nombre().to_string()));
+
+            if !self.check(&Token::Coma) && !self.check(&Token::LlaveDer) {
+                self.expect(Token::Coma)?;
+            }
+            if self.check(&Token::Coma) {
+                self.advance();
+            }
+        }
+        self.expect(Token::LlaveDer)?;
+
+        Ok(Stmt::Estructura {
+            nombre,
+            campos,
+            span,
+        })
+    }
+
+    fn parse_enum_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'enum'
+
+        let nombre = if let Token::Identificador(ref name) = self.current_token() {
+            name.clone()
+        } else {
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'enum'"));
+        };
+        self.advance();
+
+        // Variantes del enum
+        self.expect(Token::LlaveIzq)?;
+        let mut variantes = Vec::new();
+        while !self.check(&Token::LlaveDer) {
+            let variante_nombre = if let Token::Identificador(ref name) = self.current_token() {
+                name.clone()
+            } else {
+                return Err(ErrorCompilador::new("Se esperaba un identificador para la variante"));
+            };
+            self.advance();
+
+            // Campos opcionales de la variante (tuple-like o struct-like)
+            let mut campos = None;
+            if self.check(&Token::ParIzq) {
+                self.advance();
+                let mut variant_campos = Vec::new();
+                if !self.check(&Token::ParDer) {
+                    loop {
+                        let campo_tipo = self.parse_tipo()?;
+                        variant_campos.push(campo_tipo.nombre().to_string());
+                        if !self.check(&Token::Coma) {
+                            break;
+                        }
+                        self.advance();
+                    }
+                }
+                self.expect(Token::ParDer)?;
+                campos = Some(variant_campos);
+            }
+
+            variantes.push(VarianteEnum {
+                nombre: variante_nombre,
+                campos,
+                valores: None,
+            });
+
+            if !self.check(&Token::Coma) && !self.check(&Token::LlaveDer) {
+                self.expect(Token::Coma)?;
+            }
+            if self.check(&Token::Coma) {
+                self.advance();
+            }
+        }
+        self.expect(Token::LlaveDer)?;
+
+        Ok(Stmt::Enumeracion {
+            nombre,
+            variantes,
+            span,
+        })
+    }
+
+    fn parse_trait_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'rasgo'
+
+        let nombre = if let Token::Identificador(ref name) = self.current_token() {
+            name.clone()
+        } else {
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'rasgo'"));
+        };
+        self.advance();
+
+        // Métodos del trait
+        self.expect(Token::LlaveIzq)?;
+        let mut metodos = Vec::new();
+        while !self.check(&Token::LlaveDer) {
+            // Parsear firma de método simplificada
+            let metodo_nombre = if let Token::Identificador(ref name) = self.current_token() {
+                name.clone()
+            } else {
+                return Err(ErrorCompilador::new("Se esperaba un identificador para el método"));
+            };
+            self.advance();
+
+            self.expect(Token::ParIzq)?;
+            let mut parametros = Vec::new();
+            if !self.check(&Token::ParDer) {
+                // Parsear parámetros del método
+            }
+            self.expect(Token::ParDer)?;
+
+            let retorno = if self.check(&Token::Flecha) {
+                self.advance();
+                Some(self.parse_tipo()?.nombre().to_string())
+            } else {
+                None
+            };
+
+            let tiene_cuerpo = self.check(&Token::LlaveIzq);
+            if tiene_cuerpo {
+                self.parse_bloque()?;
+            } else {
+                self.expect(Token::PuntoYComa)?;
+            }
+
+            metodos.push(FirmaMetodo {
+                nombre: metodo_nombre,
+                parametros,
+                retorno,
+                tiene_cuerpo,
+            });
+        }
+        self.expect(Token::LlaveDer)?;
+
+        Ok(Stmt::Trait {
+            nombre,
+            metodos,
+            span,
+        })
+    }
+
+    fn parse_impl_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'impl'
+
+        let tipo_nombre = if let Token::Identificador(ref name) = self.current_token() {
+            name.clone()
+        } else {
+            return Err(ErrorCompilador::new("Se esperaba un identificador después de 'impl'"));
+        };
+        self.advance();
+
+        // Métodos del impl
+        self.expect(Token::LlaveIzq)?;
+        let mut metodos = Vec::new();
+        while !self.check(&Token::LlaveDer) {
+            // Parsear método como función pero dentro de impl
+            let metodo_span = self.current_span();
+            self.eat(Token::Fn)?;
+
+            let nombre = if let Token::Identificador(ref name) = self.current_token() {
+                name.clone()
+            } else {
+                return Err(ErrorCompilador::new("Se esperaba un identificador para el método"));
+            };
+            self.advance();
+
+            self.expect(Token::ParIzq)?;
+            let mut parametros = Vec::new();
+            if !self.check(&Token::ParDer) {
+                loop {
+                    let param_nombre = if let Token::Identificador(ref name) = self.current_token() {
+                        name.clone()
+                    } else {
+                        break;
+                    };
+                    self.advance();
+
+                    self.expect(Token::DosPuntos)?;
+                    let param_tipo = self.parse_tipo()?;
+                    parametros.push((param_nombre, param_tipo.nombre().to_string()));
+
+                    if !self.check(&Token::Coma) {
+                        break;
+                    }
+                    self.advance();
+                }
+            }
+            self.expect(Token::ParDer)?;
+
+            let retorno = if self.check(&Token::Flecha) {
+                self.advance();
+                Some(self.parse_tipo()?.nombre().to_string())
+            } else {
+                None
+            };
+
+            let cuerpo = self.parse_bloque()?;
+
+            metodos.push(Funcion {
+                nombre,
+                parametros,
+                retorno,
+                generico: Vec::new(),
+                donde: Vec::new(),
+                cuerpo,
+                es_seguro: true,
+                es_async: false,
+            });
+        }
+        self.expect(Token::LlaveDer)?;
+
+        Ok(Stmt::Implementacion {
+            tipo_nombre,
+            metodos,
+            span,
+        })
+    }
+
+    fn parse_pub_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
+        let span = self.current_span();
+        self.advance(); // Consumir 'pub'
+        
+        // Ahora parsear la declaración que sigue
+        match self.current_token() {
+            Token::Fn => self.parse_fn_decl(),
+            Token::Struct => self.parse_struct_decl(),
+            Token::Enum => self.parse_enum_decl(),
+            Token::Rasgo => self.parse_trait_decl(),
+            Token::Impl => self.parse_impl_decl(),
+            _ => Err(ErrorCompilador::new("'pub' debe ir seguido de una declaración")),
+        }
     }
 
     fn parse_di_macro(&mut self) -> Result<Stmt, ErrorCompilador> {

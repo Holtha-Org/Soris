@@ -1,0 +1,17 @@
+[package]
+name = "gotan"
+version = "0.1.0"
+edition = "2021"
+description = "Gestor de paquetes y compilador para proyectos Soris"
+authors = ["Fundación Holtha"]
+
+[dependencies]
+soris = { path = "../" }
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8"
+clap = { version = "4.4", features = ["derive"] }
+colored = "2.0"
+
+[[bin]]
+name = "gotan"
+path = "src/main.rs"
