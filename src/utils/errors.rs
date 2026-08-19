@@ -1,4 +1,5 @@
 ﻿use std::fmt;
+use crate::utils::span::Span;
 
 #[derive(Debug, Clone)]
 pub struct ErrorCompilador {
@@ -31,3 +32,9 @@ impl fmt::Display for ErrorCompilador {
 }
 
 impl std::error::Error for ErrorCompilador {}
+
+// Alias para compatibilidad
+pub type SorisError = ErrorCompilador;
+
+// Resultado personalizado
+pub type Resultado<T> = Result<T, ErrorCompilador>;

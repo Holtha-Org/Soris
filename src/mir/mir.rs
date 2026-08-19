@@ -149,8 +149,8 @@ fn translate_stmt(
             instrucciones.push(MirInstruccion::Saltar(etiqueta_inicio));
             instrucciones.push(MirInstruccion::Etiqueta(etiqueta_fin));
         }
-        HirStmt::LlamadaStdlib { comando, argumentos: _ } => {
-            let args: Vec<MirValor> = vec![]; // Simplificado para evitar error
+        HirStmt::LlamadaStdlib { comando, argumentos } => {
+            let args: Vec<MirValor> = argumentos.iter().map(translate_expr).collect();
             instrucciones.push(MirInstruccion::LlamarStdlib {
                 comando: comando.clone(),
                 argumentos: args,
@@ -189,8 +189,10 @@ fn translate_expr(expr: &HirExpr) -> MirValor {
             },
             operando: Box::new(translate_expr(operando)),
         },
-        HirExpr::LlamadaStdlib { comando, argumentos: _ } => {
-            MirValor::ConstanteTexto(format!("llamada_stdlib({})", comando))
+        HirExpr::LlamadaStdlib { comando, argumentos } => {
+            // Las llamadas a stdlib se manejan como instrucciones, no como valores
+            // Retornamos un valor placeholder que será reemplazado
+            MirValor::ConstanteTexto(format!("__stdlib_{}__", comando))
         }
     }
 }

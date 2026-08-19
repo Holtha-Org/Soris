@@ -1,22 +1,40 @@
-# Rust
-/target/
-**/*.rs.bk
-*.pdb
+```
+# Rust/Cargo specific
+target/
+Cargo.lock
+*.rs.bk
+*.rlib
 
-# IDE
+# Dependencies
+**/vendor/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+# OS generated files
 .DS_Store
 Thumbs.db
 
-# Archivos compilados
-*.exe
-*.out
-*.o
+# Coverage
+coverage/
+htmlcov/
+.coverage
 
-# Output de Soris
-*.rs
+# MyPy cache (in case Python is used alongside Rust)
+.mypy_cache/
+.pytest_cache/
+__pycache__/
+*.pyc
+```

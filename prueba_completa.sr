@@ -1,0 +1,136 @@
+// Prueba completa de Sintaxis Soris
+// Este archivo prueba todos los comandos principales
+
+fn inicio() {
+    di!("=== Iniciando Prueba Completa Soris ===");
+
+    // 1. Variables (vr, mut) y Tipos
+    vr entero: ent = 42;
+    vr flotante: flot = 3.1416;
+    vr texto: cad = "Hola Soris";
+    vr caracter: car = 'A';
+    vr logico: bool = verdadero;
+    
+    vr mut contador = 0;
+    contador = contador + 1;
+
+    di!("Entero: {}", entero);
+    di!("Flotante: {}", flotante);
+    di!("Texto: {}", texto);
+    di!("Caracter: {}", caracter);
+    di!("Lógico: {}", logico);
+    di!("Contador: {}", contador);
+
+    // 2. Constantes y Estáticos
+    const GRAVEDAD: flot = 9.81;
+    estatico MAX_USUARIOS: ent = 1000;
+    di!("Gravedad: {}", GRAVEDAD);
+    di!("Max Usuarios: {}", MAX_USUARIOS);
+
+    // 3. Operadores Aritméticos y Lógicos
+    vr suma = 10 + 5;
+    vr resta = 10 - 5;
+    vr mult = 10 * 5;
+    vr div = 10.0 / 2.0;
+    vr modu = 10 % 3;
+    
+    vr mayor = 10 > 5;
+    vr igual = 5 == 5;
+    vr y_logico = verdadero y falso;
+    vr o_logico = verdadero o falso;
+    vr no_logico = no falso;
+
+    di!("Suma: {}, Resta: {}, Mult: {}", suma, resta, mult);
+    di!("Div: {}, Mod: {}", div, modu);
+    di!("Mayor: {}, Igual: {}", mayor, igual);
+    di!("Y: {}, O: {}, No: {}", y_logico, o_logico, no_logico);
+
+    // 4. Control de Flujo: Si / Sino / Elsi
+    vr nota = 85;
+    si nota >= 90 {
+        di!("Calificación: Excelente");
+    } elsi nota >= 70 {
+        di!("Calificación: Bueno");
+    } sino {
+        di!("Calificación: Regular");
+    }
+
+    // 5. Bucle Mientras
+    vr mut i = 0;
+    di!("--- Bucle Mientras ---");
+    mientras i < 3 {
+        di!("Iteración mientras: {}", i);
+        i = i + 1;
+    }
+
+    // 6. Bucle Para (Rangos)
+    di!("--- Bucle Para ---");
+    para j en 0..4 {
+        di!("Índice para: {}", j);
+    }
+
+    // 7. Bucle Infinito con Romper/Continuar
+    di!("--- Bucle Infinito ---");
+    vr mut k = 0;
+    bucle {
+        k = k + 1;
+        si k == 2 {
+            cont; // Saltar iteración 2
+        }
+        di!("Bucle infinito: {}", k);
+        si k >= 4 {
+            rom; // Salir del bucle
+        }
+    }
+
+    // 8. Pattern Matching (Coincidir)
+    vr opcion = 2;
+    di!("--- Coincidir ---");
+    coin opcion {
+        1 => di!("Opción uno"),
+        2 => di!("Opción dos (Seleccionada)"),
+        3 => di!("Opción tres"),
+        _ => di!("Opción desconocida")
+    }
+
+    // 9. Funciones y Retorno
+    vr resultado = sumar(5, 10);
+    di!("Resultado suma: {}", resultado);
+
+    // 10. Estructuras
+    vr p1 = Punto::nuevo(10.0, 20.0);
+    di!("Punto X: {}, Y: {}", p1.x, p1.y);
+
+    // 11. Enums y Option/Result
+    vr maybe: opt<ent> = alg(100);
+    coin maybe {
+        alg(val) => di!("Valor encontrado: {}", val),
+        nada => di!("No hay valor")
+    }
+
+    vr res: result<ent, cad> = ok(200);
+    coin res {
+        ok(v) => di!("Éxito: {}", v),
+        err(e) => di!("Error: {}", e)
+    }
+
+    di!("=== Prueba Completada con Éxito ===");
+}
+
+// Definición de Función
+fn sumar(a: ent, b: ent) -> ent {
+    dev a + b;
+}
+
+// Definición de Estructura
+estructura Punto {
+    x: flot,
+    y: flot,
+}
+
+// Implementación de Métodos
+impl Punto {
+    fn nuevo(x: flot, y: flot) -> Self {
+        Punto { x: x, y: y }
+    }
+}
