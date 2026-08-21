@@ -189,7 +189,7 @@ fn translate_expr(expr: &HirExpr) -> MirValor {
             },
             operando: Box::new(translate_expr(operando)),
         },
-        HirExpr::LlamadaStdlib { comando, argumentos } => {
+        HirExpr::LlamadaStdlib { comando, argumentos: _ } => {
             // Las llamadas a stdlib se manejan como instrucciones, no como valores
             // Retornamos un valor placeholder que será reemplazado
             MirValor::ConstanteTexto(format!("__stdlib_{}__", comando))

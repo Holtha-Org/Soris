@@ -40,6 +40,13 @@ pub fn recorrer_expr<T>(visitor: &mut dyn Visitor<T>, expr: &Expr) -> T {
         Expr::AccesoMiembro { objeto, miembro, .. } => {
             visitor.visitar_expr_acceso_miembro(objeto, miembro)
         }
+        Expr::LiteralCaracter(_, _) | Expr::LiteralBool(_, _) | 
+        Expr::OpcionAlguna(_, _) | Expr::OpcionNinguna(_) |
+        Expr::ResultadoOk(_, _) | Expr::ResultadoErr(_, _) |
+        Expr::Tupla(_, _) | Expr::Array(_, _) | Expr::Vector(_, _) |
+        Expr::Indexacion { .. } | Expr::Rango { .. } | Expr::Cierre { .. } |
+        Expr::Match { .. } | Expr::IfExpresion { .. } | Expr::Bloque(_, _) |
+        Expr::Desestructurar { .. } => todo!("Expresión no implementada en visitor"),
     }
 }
 
@@ -60,5 +67,13 @@ pub fn recorrer_stmt<T>(visitor: &mut dyn Visitor<T>, stmt: &Stmt) -> T {
         Stmt::LlamadaStdlib { comando, argumentos, .. } => {
             visitor.visitar_stmt_llamada_stdlib(comando, argumentos)
         }
+        Stmt::Const { .. } | Stmt::Estatico { .. } | Stmt::Tipo { .. } |
+        Stmt::Estructura { .. } | Stmt::Enumeracion { .. } |
+        Stmt::Implementacion { .. } | Stmt::Trait { .. } |
+        Stmt::Funcion { .. } | Stmt::Coincidir { .. } |
+        Stmt::Para { .. } | Stmt::Retorno { .. } | Stmt::Di { .. } |
+        Stmt::Pausa { .. } | Stmt::Continuar { .. } |
+        Stmt::Bloque { .. } | Stmt::Asignacion { .. } |
+        Stmt::BrazoCoin { .. } => todo!("Sentencia no implementada en visitor"),
     }
 }

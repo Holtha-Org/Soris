@@ -1,40 +1,4 @@
 ```
-# Rust/Cargo specific
 target/
-Cargo.lock
-*.rs.bk
-*.rlib
-
-# Dependencies
-**/vendor/
-
-# Logs and temp files
-*.log
-*.tmp
-
-# Environment
-.env
-.env.local
-*.env.*
-
-# Editors
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS generated files
-.DS_Store
-Thumbs.db
-
-# Coverage
-coverage/
-htmlcov/
-.coverage
-
-# MyPy cache (in case Python is used alongside Rust)
-.mypy_cache/
-.pytest_cache/
-__pycache__/
-*.pyc
+**/*.rs.bk
 ```

@@ -56,7 +56,7 @@ impl ScopeResolver {
         }
     }
 
-    fn resolver_acceso(&mut self, nombre: &str, span: Span) {
+    fn resolver_acceso(&mut self, nombre: &str, _span: Span) {
         let mut encontrada = false;
         for scope in self.scopes.iter().rev() {
             if scope.contains_key(nombre) {

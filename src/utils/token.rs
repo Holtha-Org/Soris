@@ -179,7 +179,6 @@ impl fmt::Display for Token {
             Token::Pausa => write!(f, "'pausa'"),
             Token::Continuar => write!(f, "'continuar'"),
             Token::Retorna => write!(f, "'retorna'"),
-            Token::Rompe => write!(f, "'rom'"),
             Token::Coin => write!(f, "'coin'"),
             
             // Declaraciones

@@ -71,7 +71,7 @@ impl CompiladorSoris {
 
         // Fase 1: Lexing
         let mut lexer = Lexer::new(codigo_fuente);
-        let tokens = lexer.tokenize()
+        let _tokens = lexer.tokenize()
             .map_err(|e| vec![e])?;
 
         // Fase 2: Parsing
@@ -109,7 +109,7 @@ impl CompiladorSoris {
         // Modo transpilación normal (.sr → Rust)
         // Fase 1: Lexing
         let mut lexer = Lexer::new(codigo_fuente);
-        let tokens = lexer.tokenize()
+        let _tokens = lexer.tokenize()
             .map_err(|e| vec![e])?;
 
         // Fase 2: Parsing
