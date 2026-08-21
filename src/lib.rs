@@ -75,8 +75,10 @@ impl CompiladorSoris {
             .map_err(|e| vec![e])?;
 
         // Fase 2: Parsing
-        let mut parser = Parser::new(codigo_fuente)?;
-        let ast = parser.parse()?;
+        let mut parser = Parser::new(codigo_fuente)
+            .map_err(|e| vec![e])?;
+        let ast = parser.parse()
+            .map_err(|e: ErrorCompilador| vec![e])?;
 
         // Fase 3: Resolución de scopes
         let mut resolver = ScopeResolver::new();
@@ -113,8 +115,10 @@ impl CompiladorSoris {
             .map_err(|e| vec![e])?;
 
         // Fase 2: Parsing
-        let mut parser = Parser::new(codigo_fuente)?;
-        let ast = parser.parse()?;
+        let mut parser = Parser::new(codigo_fuente)
+            .map_err(|e| vec![e])?;
+        let ast = parser.parse()
+            .map_err(|e: ErrorCompilador| vec![e])?;
 
         // Fase 3: Resolución de scopes
         let mut resolver = ScopeResolver::new();

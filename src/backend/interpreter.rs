@@ -1,4 +1,4 @@
-﻿use crate::ast::{Expr, Stmt, Program, Literal};
+﻿use crate::ast::{Expr, Stmt, Program, Literal, BinOp};
 use crate::utils::errors::SorisError;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -63,7 +63,7 @@ impl Interprete {
         }
 
         if !main_found {
-            return Err(SorisError::new("Error de Entrada", "No se encontró la función 'inicio()'"));
+            return Err(SorisError::new("No se encontró la función 'inicio()'"));
         }
 
         Ok(())
@@ -97,7 +97,7 @@ impl Interprete {
                 if let Expr::Identificador(nombre) = objetivo {
                     entorno.borrow_mut().insert(nombre.clone(), val_evaluado);
                 } else {
-                    return Err(SorisError::new("Error de Ejecución", "Asignación inválida"));
+                    return Err(SorisError::new("Asignación inválida"));
                 }
                 Ok(None)
             },
@@ -219,7 +219,7 @@ impl Interprete {
                     Literal::Booleano(b) => Ok(Valor::Booleano(*b)),
                     Literal::Nada => Ok(Valor::Nada),
                     Literal::Caracter(c) => Ok(Valor::Caracter(*c)),
-                    _ => Err(SorisError::new("Error de Tipo", "Literal no soportado"))
+                    _ => Err(SorisError::new("Literal no soportado"))
                 }
             },
             Expr::Identificador(nombre) => {
@@ -227,7 +227,7 @@ impl Interprete {
                 if let Some(val) = env_lock.get(nombre) {
                     Ok(val.clone())
                 } else {
-                    Err(SorisError::new("Error de Variable", &format!("Variable '{}' no definida", nombre)))
+                    Err(SorisError::new(&format!("Variable '{}' no definida", nombre)))
                 }
             },
             Expr::Binaria { izquierda, operador, derecha } => {
@@ -236,88 +236,87 @@ impl Interprete {
 
                 match (izq, der) {
                     (Valor::Entero(a), Valor::Entero(b)) => {
-                        match operador.as_str() {
-                            "+" => Ok(Valor::Entero(a + b)),
-                            "-" => Ok(Valor::Entero(a - b)),
-                            "*" => Ok(Valor::Entero(a * b)),
-                            "/" => if b != 0 { Ok(Valor::Entero(a / b)) } else { Err(SorisError::new("Runtime", "División por cero")) },
-                            "%" => Ok(Valor::Entero(a % b)),
-                            "==" => Ok(Valor::Booleano(a == b)),
-                            "!=" => Ok(Valor::Booleano(a != b)),
-                            ">" => Ok(Valor::Booleano(a > b)),
-                            "<" => Ok(Valor::Booleano(a < b)),
-                            ">=" => Ok(Valor::Booleano(a >= b)),
-                            "<=" => Ok(Valor::Booleano(a <= b)),
-                            _ => Err(SorisError::new("Operador", "Operador no válido para enteros"))
+                        match operador {
+                            BinOp::Suma => Ok(Valor::Entero(a + b)),
+                            BinOp::Resta => Ok(Valor::Entero(a - b)),
+                            BinOp::Multiplicacion => Ok(Valor::Entero(a * b)),
+                            BinOp::Division => if b != 0 { Ok(Valor::Entero(a / b)) } else { Err(SorisError::new("División por cero")) },
+                            BinOp::Modulo => Ok(Valor::Entero(a % b)),
+                            BinOp::Igual => Ok(Valor::Booleano(a == b)),
+                            BinOp::NoIgual => Ok(Valor::Booleano(a != b)),
+                            BinOp::Menor => Ok(Valor::Booleano(a < b)),
+                            BinOp::Mayor => Ok(Valor::Booleano(a > b)),
+                            BinOp::MenorIgual => Ok(Valor::Booleano(a <= b)),
+                            BinOp::MayorIgual => Ok(Valor::Booleano(a >= b)),
+                            _ => Err(SorisError::new("Operador no válido para enteros"))
                         }
                     },
                     (Valor::Flotante(a), Valor::Flotante(b)) => {
-                        match operador.as_str() {
-                            "+" => Ok(Valor::Flotante(a + b)),
-                            "-" => Ok(Valor::Flotante(a - b)),
-                            "*" => Ok(Valor::Flotante(a * b)),
-                            "/" => Ok(Valor::Flotante(a / b)),
-                            "==" => Ok(Valor::Booleano((a - b).abs() < f64::EPSILON)),
-                            ">" => Ok(Valor::Booleano(a > b)),
-                            "<" => Ok(Valor::Booleano(a < b)),
-                            _ => Err(SorisError::new("Operador", "Operador no válido para flotantes"))
+                        match operador {
+                            BinOp::Suma => Ok(Valor::Flotante(a + b)),
+                            BinOp::Resta => Ok(Valor::Flotante(a - b)),
+                            BinOp::Multiplicacion => Ok(Valor::Flotante(a * b)),
+                            BinOp::Division => Ok(Valor::Flotante(a / b)),
+                            BinOp::Igual => Ok(Valor::Booleano((a - b).abs() < f64::EPSILON)),
+                            BinOp::Menor => Ok(Valor::Booleano(a < b)),
+                            BinOp::Mayor => Ok(Valor::Booleano(a > b)),
+                            _ => Err(SorisError::new("Operador no válido para flotantes"))
                         }
                     },
                     (Valor::Texto(a), Valor::Texto(b)) => {
-                        if operador == "+" {
-                            Ok(Valor::Texto(format!("{}{}", a, b)))
-                        } else {
-                            Err(SorisError::new("Operador", "Solo '+' soportado para texto"))
+                        match operador {
+                            BinOp::Suma => Ok(Valor::Texto(format!("{}{}", a, b))),
+                            _ => Err(SorisError::new("Solo '+' soportado para texto"))
                         }
                     },
-                    _ => Err(SorisError::new("Tipo", "Tipos incompatibles en operación binaria"))
+                    _ => Err(SorisError::new("Tipos incompatibles en operación binaria"))
                 }
             },
             Expr::Llamada { nombre, argumentos } => {
                 // Nativas hardcodeadas para el MVP
                 match nombre.as_str() {
                     "raiz_cuadrada" => {
-                        if argumentos.len() != 1 { return Err(SorisError::new("Args", "raiz_cuadrada requiere 1 arg")); }
+                        if argumentos.len() != 1 { return Err(SorisError::new("raiz_cuadrada requiere 1 arg")); }
                         let val = self.evaluar_expr(&argumentos[0], Rc::clone(&entorno))?;
                         if let Valor::Flotante(f) = val {
                             return Ok(Valor::Flotante(f.sqrt()));
                         }
-                        return Err(SorisError::new("Tipo", "raiz_cuadrada requiere flotante"));
+                        return Err(SorisError::new("raiz_cuadrada requiere flotante"));
                     },
                     "generar_entre" => {
                         use rand::Rng;
-                        if argumentos.len() != 2 { return Err(SorisError::new("Args", "generar_entre requiere 2 args")); }
+                        if argumentos.len() != 2 { return Err(SorisError::new("generar_entre requiere 2 args")); }
                         let a = self.evaluar_expr(&argumentos[0], Rc::clone(&entorno))?;
                         let b = self.evaluar_expr(&argumentos[1], Rc::clone(&entorno))?;
                         if let (Valor::Entero(min), Valor::Entero(max)) = (a, b) {
                             let mut rng = rand::thread_rng();
                             return Ok(Valor::Entero(rng.gen_range(min..=max)));
                         }
-                        return Err(SorisError::new("Tipo", "generar_entre requiere enteros"));
+                        return Err(SorisError::new("generar_entre requiere enteros"));
                     },
                     "limpiar" => {
                         print!("\x1B[2J\x1B[1;1H");
                         return Ok(Valor::Nada);
                     },
                     "dormir" => {
-                        if argumentos.len() != 1 { return Err(SorisError::new("Args", "dormir requiere 1 arg")); }
+                        if argumentos.len() != 1 { return Err(SorisError::new("dormir requiere 1 arg")); }
                         let val = self.evaluar_expr(&argumentos[0], Rc::clone(&entorno))?;
                         if let Valor::Flotante(segs) = val {
                             std::thread::sleep(std::time::Duration::from_secs_f64(segs));
                             return Ok(Valor::Nada);
                         }
-                        return Err(SorisError::new("Tipo", "dormir requiere flotante"));
+                        return Err(SorisError::new("dormir requiere flotante"));
                     },
                     _ => {}
                 }
                 
-                Err(SorisError::new("Runtime", &format!("Función '{}' no encontrada o no implementada en intérprete", nombre)))
+                Err(SorisError::new(&format!("Función '{}' no encontrada o no implementada en intérprete", nombre)))
             },
             Expr::Rango { inicio, fin } => {
                 // Los rangos se evalúan en el contexto del for
                 Ok(Valor::Nada)
             },
-            _ => Err(SorisError::new("Sintaxis", "Expresión no soportada en intérprete"))
+            _ => Err(SorisError::new("Expresión no soportada en intérprete"))
         }
     }
 
