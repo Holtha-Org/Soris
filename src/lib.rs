@@ -71,14 +71,12 @@ impl CompiladorSoris {
 
         // Fase 1: Lexing
         let mut lexer = Lexer::new(codigo_fuente);
-        let tokens = lexer.tokenize()
+        let _tokens = lexer.tokenize()
             .map_err(|e| vec![e])?;
 
         // Fase 2: Parsing
-        let mut parser = Parser::new(codigo_fuente)
-            .map_err(|e| vec![e])?;
-        let ast = parser.parse()
-            .map_err(|e: ErrorCompilador| vec![e])?;
+        let mut parser = Parser::new(codigo_fuente)?;
+        let ast = parser.parse()?;
 
         // Fase 3: Resolución de scopes
         let mut resolver = ScopeResolver::new();
@@ -111,14 +109,12 @@ impl CompiladorSoris {
         // Modo transpilación normal (.sr → Rust)
         // Fase 1: Lexing
         let mut lexer = Lexer::new(codigo_fuente);
-        let tokens = lexer.tokenize()
+        let _tokens = lexer.tokenize()
             .map_err(|e| vec![e])?;
 
         // Fase 2: Parsing
-        let mut parser = Parser::new(codigo_fuente)
-            .map_err(|e| vec![e])?;
-        let ast = parser.parse()
-            .map_err(|e: ErrorCompilador| vec![e])?;
+        let mut parser = Parser::new(codigo_fuente)?;
+        let ast = parser.parse()?;
 
         // Fase 3: Resolución de scopes
         let mut resolver = ScopeResolver::new();

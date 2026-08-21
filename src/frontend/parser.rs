@@ -568,7 +568,7 @@ impl Parser {
     }
 
     fn parse_pub_decl(&mut self) -> Result<Stmt, ErrorCompilador> {
-        let span = self.current_span();
+        let _span = self.current_span();
         self.advance(); // Consumir 'pub'
         
         // Ahora parsear la declaración que sigue

@@ -33,6 +33,13 @@ impl fmt::Display for ErrorCompilador {
 
 impl std::error::Error for ErrorCompilador {}
 
+// Implementar From para permitir conversión con operador ?
+impl From<ErrorCompilador> for Vec<ErrorCompilador> {
+    fn from(err: ErrorCompilador) -> Self {
+        vec![err]
+    }
+}
+
 // Alias para compatibilidad
 pub type SorisError = ErrorCompilador;
 
